@@ -54,6 +54,31 @@ public class EventService
         return Task.CompletedTask;
     }
 
+    public Task RegisterAttendeeAsync(Guid eventId, Attendee attendee)
+    {
+        var eventToUpdate = _events.FirstOrDefault(e => e.Id == eventId);
+        if (eventToUpdate != null)
+        {
+            // Basic check to prevent duplicate emails for the same event
+            if (!eventToUpdate.Attendees.Any(a => a.Email.Equals(attendee.Email, StringComparison.OrdinalIgnoreCase)))
+            {
+                eventToUpdate.Attendees.Add(attendee);
+                NotifyStateChanged();
+            }
+            else
+            {
+                // Optionally handle the case where the email is already registered
+                // For now, we just don't add them again.
+            }
+        }
+        else
+        {
+            // Handle case where event is not found
+            throw new ArgumentException("Event not found.", nameof(eventId));
+        }
+        return Task.CompletedTask;
+    }
+
     private void NotifyStateChanged() => OnChange?.Invoke();
 }
 

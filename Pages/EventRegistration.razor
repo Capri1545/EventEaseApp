@@ -1,44 +1,70 @@
-@page "/event/register"
-@using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.AspNetCore.Components.Web
+@page "/register/{EventId}"
 @inject EventService EventSvc
-@inject NavigationManager NavigationMgr
+@inject NavigationManager NavigationManager
+@using EventEaseApp.Models
+@using System.ComponentModel.DataAnnotations
 
-<PageTitle>Register Event</PageTitle>
+<h3>Register for Event: @eventDetails?.EventName</h3>
 
-<h1>Register New Event</h1>
+@if (eventDetails != null)
+{
+    <EditForm Model="@newAttendee" OnValidSubmit="HandleRegistration">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-<EditForm Model="@newEvent" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+        <div class="mb-3">
+            <label for="name" class="form-label">Name:</label>
+            <InputText id="name" class="form-control" @bind-Value="newAttendee.Name" />
+            <ValidationMessage For="() => newAttendee.Name" />
+        </div>
 
-    <div class="mb-3">
-        <label for="eventName" class="form-label">Event Name:</label>
-        <InputText id="eventName" class="form-control" @bind-Value="newEvent.EventName" />
-        <ValidationMessage For="@(() => newEvent.EventName)" />
-    </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email:</label>
+            <InputText id="email" type="email" class="form-control" @bind-Value="newAttendee.Email" />
+            <ValidationMessage For="() => newAttendee.Email" />
+        </div>
 
-    <div class="mb-3">
-        <label for="eventDate" class="form-label">Date:</label>
-        <InputDate id="eventDate" class="form-control" @bind-Value="newEvent.Date" />
-         <ValidationMessage For="@(() => newEvent.Date)" />
-    </div>
-
-    <div class="mb-3">
-        <label for="eventLocation" class="form-label">Location:</label>
-        <InputText id="eventLocation" class="form-control" @bind-Value="newEvent.Location" />
-         <ValidationMessage For="@(() => newEvent.Location)" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Register Event</button>
-</EditForm>
+        <button type="submit" class="btn btn-primary">Register</button>
+        <button type="button" class="btn btn-secondary" @onclick="NavigateBack">Cancel</button>
+    </EditForm>
+}
+else
+{
+    <p>Loading event details...</p>
+}
 
 @code {
-    private Event newEvent = new();
+    [Parameter]
+    public string EventId { get; set; } = string.Empty;
 
-    private async Task HandleValidSubmit()
+    private Event? eventDetails;
+    private Attendee newAttendee = new();
+    private Guid eventGuid;
+
+    protected override async Task OnInitializedAsync()
     {
-        await EventSvc.AddEventAsync(newEvent);
-        NavigationMgr.NavigateTo("/event/list");
+        if (Guid.TryParse(EventId, out eventGuid))
+        {
+            eventDetails = await EventSvc.GetEventByIdAsync(eventGuid);
+        }
+        else
+        {
+            // Handle invalid GUID format
+            NavigationManager.NavigateTo("/events"); // Or show an error message
+        }
+    }
+
+    private async Task HandleRegistration()
+    {
+        if (eventDetails != null)
+        {
+            await EventSvc.RegisterAttendeeAsync(eventGuid, newAttendee);
+            NavigateBack(); // Navigate back to the event list after registration
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/events");
     }
 }

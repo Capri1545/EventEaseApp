@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace EventEaseApp.Models;
@@ -10,8 +11,11 @@ public class Event
     public string? EventName { get; set; }
 
     [Required(ErrorMessage = "Date is required.")]
-    public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+    public DateTime Date { get; set; }
 
     [Required(ErrorMessage = "Location is required.")]
-    public string? Location { get; set; }
+    public string Location { get; set; } = string.Empty;
+
+    // Add a list to store attendees
+    public List<Attendee> Attendees { get; set; } = new List<Attendee>();
 }

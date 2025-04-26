@@ -1,4 +1,4 @@
-@page "/event/list"
+@page "/events"
 @using Microsoft.AspNetCore.Components.Web
 @inject EventService EventSvc
 @inject NavigationManager NavigationMgr
@@ -7,6 +7,8 @@
 <PageTitle>Event List</PageTitle>
 
 <h1>Event List</h1>
+
+<button class="btn btn-success mb-3" @onclick="AddNewEvent">Add New Event</button>
 
 @if (events == null)
 {
@@ -24,6 +26,7 @@ else
                 <th>Name</th>
                 <th>Date</th>
                 <th>Location</th>
+                <th>Attendees</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -35,10 +38,39 @@ else
                     <td>@ev.Date.ToShortDateString()</td>
                     <td>@ev.Location</td>
                     <td>
+                        @ev.Attendees.Count
+                        @if (ev.Attendees.Any())
+                        {
+                            <button class="btn btn-sm btn-info ms-2" @onclick="() => ToggleAttendeeList(ev.Id)">View</button>
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-success" @onclick="() => RegisterForEvent(ev.Id)">Register</button>
                         <button class="btn btn-sm btn-primary" @onclick="() => EditEvent(ev.Id)">Edit</button>
                         <button class="btn btn-sm btn-danger" @onclick="() => DeleteEvent(ev.Id)">Delete</button>
                     </td>
                 </tr>
+                @if (showAttendeesForEventId == ev.Id)
+                {
+                    <tr>
+                        <td colspan="5">
+                            <h5>Attendees for @ev.EventName:</h5>
+                            @if (ev.Attendees.Any())
+                            {
+                                <ul>
+                                    @foreach (var attendee in ev.Attendees)
+                                    {
+                                        <li>@attendee.Name (@attendee.Email)</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p>No attendees registered yet.</p>
+                            }
+                        </td>
+                    </tr>
+                }
             }
         </tbody>
     </table>
@@ -46,11 +78,28 @@ else
 
 @code {
     private List<Event>? events;
+    private Guid? showAttendeesForEventId; // Track which event's attendees to show
 
     protected override async Task OnInitializedAsync()
     {
         events = await EventSvc.GetEventsAsync();
-        EventSvc.OnChange += StateHasChanged; // Re-render when events change
+        EventSvc.OnChange += RefreshEvents; // Use a method to refresh data
+    }
+
+    private async void RefreshEvents()
+    {
+        events = await EventSvc.GetEventsAsync();
+        await InvokeAsync(StateHasChanged); // Ensure UI update happens on the correct thread
+    }
+
+    private void AddNewEvent()
+    {
+        NavigationMgr.NavigateTo("/event/edit"); // Navigate to the edit page with no ID for creation
+    }
+
+    private void RegisterForEvent(Guid id)
+    {
+        NavigationMgr.NavigateTo($"/register/{id}");
     }
 
     private void EditEvent(Guid id)
@@ -62,11 +111,23 @@ else
     {
         // Optional: Add confirmation logic here
         await EventSvc.DeleteEventAsync(id);
-        // StateHasChanged is called automatically by the OnChange event
+        // RefreshEvents is called automatically by the OnChange event
+    }
+
+    private void ToggleAttendeeList(Guid eventId)
+    {
+        if (showAttendeesForEventId == eventId)
+        {
+            showAttendeesForEventId = null; // Hide if already showing
+        }
+        else
+        {
+            showAttendeesForEventId = eventId; // Show for the selected event
+        }
     }
 
     public void Dispose()
     {
-        EventSvc.OnChange -= StateHasChanged; // Unsubscribe
+        EventSvc.OnChange -= RefreshEvents; // Unsubscribe
     }
 }
