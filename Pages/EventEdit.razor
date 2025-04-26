@@ -1,0 +1,70 @@
+@page "/event/edit/{Id:guid}"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@inject EventService EventSvc
+@inject NavigationManager NavigationMgr
+
+<PageTitle>Edit Event</PageTitle>
+
+<h1>Edit Event</h1>
+
+@if (eventToEdit == null)
+{
+    <p><em>Loading event details...</em></p>
+}
+else
+{
+    <EditForm Model="@eventToEdit" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="eventName" class="form-label">Event Name:</label>
+            <InputText id="eventName" class="form-control" @bind-Value="eventToEdit.EventName" />
+            <ValidationMessage For="@(() => eventToEdit.EventName)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="eventDate" class="form-label">Date:</label>
+            <InputDate id="eventDate" class="form-control" @bind-Value="eventToEdit.Date" />
+            <ValidationMessage For="@(() => eventToEdit.Date)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="eventLocation" class="form-label">Location:</label>
+            <InputText id="eventLocation" class="form-control" @bind-Value="eventToEdit.Location" />
+            <ValidationMessage For="@(() => eventToEdit.Location)" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Event</button>
+        <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private Event? eventToEdit;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        eventToEdit = await EventSvc.GetEventByIdAsync(Id);
+        // Create a copy if you want to isolate changes until save, 
+        // but for simplicity, we edit the original object directly.
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (eventToEdit != null)
+        {
+            await EventSvc.UpdateEventAsync(eventToEdit);
+            NavigationMgr.NavigateTo("/event/list");
+        }
+    }
+
+    private void CancelEdit()
+    {
+        NavigationMgr.NavigateTo("/event/list");
+    }
+}

@@ -1,0 +1,44 @@
+@page "/event/register"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@inject EventService EventSvc
+@inject NavigationManager NavigationMgr
+
+<PageTitle>Register Event</PageTitle>
+
+<h1>Register New Event</h1>
+
+<EditForm Model="@newEvent" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="eventName" class="form-label">Event Name:</label>
+        <InputText id="eventName" class="form-control" @bind-Value="newEvent.EventName" />
+        <ValidationMessage For="@(() => newEvent.EventName)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="eventDate" class="form-label">Date:</label>
+        <InputDate id="eventDate" class="form-control" @bind-Value="newEvent.Date" />
+         <ValidationMessage For="@(() => newEvent.Date)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="eventLocation" class="form-label">Location:</label>
+        <InputText id="eventLocation" class="form-control" @bind-Value="newEvent.Location" />
+         <ValidationMessage For="@(() => newEvent.Location)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Register Event</button>
+</EditForm>
+
+@code {
+    private Event newEvent = new();
+
+    private async Task HandleValidSubmit()
+    {
+        await EventSvc.AddEventAsync(newEvent);
+        NavigationMgr.NavigateTo("/event/list");
+    }
+}

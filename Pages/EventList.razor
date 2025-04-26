@@ -1,0 +1,72 @@
+@page "/event/list"
+@using Microsoft.AspNetCore.Components.Web
+@inject EventService EventSvc
+@inject NavigationManager NavigationMgr
+@implements IDisposable
+
+<PageTitle>Event List</PageTitle>
+
+<h1>Event List</h1>
+
+@if (events == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!events.Any())
+{
+     <p><em>No events registered yet.</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Location</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ev in events)
+            {
+                <tr>
+                    <td>@ev.EventName</td>
+                    <td>@ev.Date.ToShortDateString()</td>
+                    <td>@ev.Location</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" @onclick="() => EditEvent(ev.Id)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteEvent(ev.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Event>? events;
+
+    protected override async Task OnInitializedAsync()
+    {
+        events = await EventSvc.GetEventsAsync();
+        EventSvc.OnChange += StateHasChanged; // Re-render when events change
+    }
+
+    private void EditEvent(Guid id)
+    {
+        NavigationMgr.NavigateTo($"/event/edit/{id}");
+    }
+
+    private async Task DeleteEvent(Guid id)
+    {
+        // Optional: Add confirmation logic here
+        await EventSvc.DeleteEventAsync(id);
+        // StateHasChanged is called automatically by the OnChange event
+    }
+
+    public void Dispose()
+    {
+        EventSvc.OnChange -= StateHasChanged; // Unsubscribe
+    }
+}
