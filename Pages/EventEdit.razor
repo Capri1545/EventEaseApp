@@ -9,9 +9,9 @@
 
 <h1>@(IsNewEvent ? "Create New Event" : "Edit Event")</h1>
 
-@if (eventModel == null && !IsNewEvent) // Show loading only when editing and not yet loaded
+@if (eventModel == null) // Simplified condition: Only render form when eventModel is not null
 {
-    <p><em>Loading event details...</em></p>
+    <p><em>@(IsNewEvent ? "Initializing..." : "Loading event details...")</em></p>
 }
 else
 {
